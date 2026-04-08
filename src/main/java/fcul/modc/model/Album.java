@@ -1,4 +1,4 @@
-package fcul.model;
+package fcul.modc.model;
 
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -24,7 +24,7 @@ public class Album {
     private List<Photo> photos = new ArrayList<>();
 
     // --- Constructors ---
-    protected Album() {} // required by Hibernate
+    protected Album() {}
 
     public Album(String name, User owner) {
         this.name = name;
@@ -34,12 +34,12 @@ public class Album {
     // --- Helper methods ---
     public void addPhoto(Photo photo) {
         photos.add(photo);
-        photo.getMetadata().setAlbum(this);
+        photo.setAlbum(this);
     }
 
     public void removePhoto(Photo photo) {
         photos.remove(photo);
-        photo.getMetadata().setAlbum(null);
+        photo.setAlbum(null);
     }
 
     // --- Getters & Setters ---

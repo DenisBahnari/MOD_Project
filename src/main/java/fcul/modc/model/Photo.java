@@ -1,4 +1,4 @@
-package fcul.model;
+package fcul.modc.model;
 
 import jakarta.persistence.*;
 
@@ -6,21 +6,26 @@ import jakarta.persistence.*;
 public class Photo {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Lob
     private byte[] data;
 
-    @OneToOne
-    @JoinColumn(name = "metadata_id")
+    @OneToOne(mappedBy = "photo", cascade = CascadeType.ALL)
     private PhotoMetadata metadata;
 
+    @ManyToOne
+    @JoinColumn(name = "album_id")
+    private Album album;
 
-    public Photo(Long id, byte[] data, PhotoMetadata metadata) {
+    public Photo() {}
+
+    public Photo(Long id, byte[] data, PhotoMetadata metadata, Album album) {
         this.id = id;
         this.data = data;
         this.metadata = metadata;
+        this.album = album;
     }
 
     public Long getId() {
@@ -46,4 +51,8 @@ public class Photo {
     public void setMetadata(PhotoMetadata metadata) {
         this.metadata = metadata;
     }
+
+    public Album getAlbum() {return album;}
+
+    public void setAlbum(Album album) {this.album = album;}
 }

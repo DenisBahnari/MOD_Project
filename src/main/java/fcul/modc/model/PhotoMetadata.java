@@ -1,4 +1,4 @@
-package fcul.model;
+package fcul.modc.model;
 
 import jakarta.persistence.*;
 
@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public class PhotoMetadata {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false)
@@ -32,15 +32,14 @@ public class PhotoMetadata {
     @Column(length = 500)
     private String description;
 
-    @ManyToOne
-    private Album album;
-
-    @OneToOne(mappedBy = "metadata", cascade = CascadeType.ALL)
+    @OneToOne
+    @JoinColumn(name = "photo_id")
     private Photo photo;
 
+    public PhotoMetadata() {}
 
     public PhotoMetadata(Long id, String filename, long size, LocalDateTime uploadTime, LocalDateTime takenTime,
-                         String cameraModel, String location, String description, Album album, Photo photo) {
+                         String cameraModel, String location, String description, Photo photo) {
         this.id = id;
         this.filename = filename;
         this.size = size;
@@ -49,7 +48,6 @@ public class PhotoMetadata {
         this.cameraModel = cameraModel;
         this.location = location;
         this.description = description;
-        this.album = album;
         this.photo = photo;
     }
 
@@ -115,14 +113,6 @@ public class PhotoMetadata {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public Album getAlbum() {
-        return album;
-    }
-
-    public void setAlbum(Album album) {
-        this.album = album;
     }
 
     public Photo getPhoto() {
