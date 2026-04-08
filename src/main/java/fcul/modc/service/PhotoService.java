@@ -5,19 +5,25 @@ import fcul.modc.model.Photo;
 import fcul.modc.model.PhotoMetadata;
 import fcul.modc.repository.AlbumRepository;
 import fcul.modc.repository.PhotoMetadataRepository;
+import fcul.modc.repository.PhotoRepository;
+import fcul.modc.responses.photos.PhotoResponse;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class PhotoService {
 
+    private final PhotoRepository photoRepository;
     private final AlbumRepository albumRepository;
     private final PhotoMetadataRepository photoMetadataRepository;
 
-    public PhotoService(AlbumRepository albumRepository, PhotoMetadataRepository photoMetadataRepository) {
+    public PhotoService(PhotoRepository photoRepository, AlbumRepository albumRepository, PhotoMetadataRepository photoMetadataRepository) {
+        this.photoRepository = photoRepository;
         this.albumRepository = albumRepository;
         this.photoMetadataRepository = photoMetadataRepository;
     }
@@ -44,4 +50,28 @@ public class PhotoService {
         return photoMetadataRepository.save(metadata);
     }
 
+    public PhotoResponse getPhotoById(Long id) {
+        Photo photo = photoRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Photo not found with id: " + id));
+
+        return PhotoResponse.from(photo);
+    }
+
+    public List<PhotoResponse> getPhotosByAlbum(Long albumId) {
+        Album album = albumRepository.findById(albumId)
+                .orElseThrow(() -> new EntityNotFoundException("Album not found with id: " + albumId));
+
+        return photoRepository.findByAlbum(album)
+                .stream()
+                .map(PhotoResponse::from)
+                .toList();
+    }
+
+    // Returns raw bytes so the controller can stream it back
+    public byte[] getPhotoData(Long id) {
+        Photo photo = photoRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Photo not found with id: " + id));
+
+        return photo.getData();
+    }
 }

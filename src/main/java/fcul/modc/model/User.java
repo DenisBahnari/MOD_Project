@@ -19,7 +19,7 @@ public class User {
     private List<Album> albums = new ArrayList<>();
 
     // --- Constructors ---
-    protected User() {}
+    public User() {}
 
     public User(String username) {
         this.username = username;
