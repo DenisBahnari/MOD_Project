@@ -1,16 +1,11 @@
 package fcul.modc.controller;
 
-import fcul.modc.requests.photos.CreatePhotoRequest;
 import fcul.modc.responses.photos.PhotoResponse;
 import fcul.modc.service.PhotoService;
-import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -21,17 +16,6 @@ public class PhotoController {
 
     public PhotoController(PhotoService photoService) {
         this.photoService = photoService;
-    }
-
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<PhotoResponse> uploadPhoto(
-            @RequestPart("file") MultipartFile file,
-            @RequestPart("metadata") @Valid CreatePhotoRequest request
-    ) throws IOException {
-        PhotoResponse photo = photoService.uploadPhoto(file, request);
-        return ResponseEntity
-                .created(URI.create("/photos/" + photo.getId()))
-                .body(photo);
     }
 
     @GetMapping("/{id}")
