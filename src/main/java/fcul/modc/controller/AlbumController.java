@@ -38,9 +38,9 @@ public class AlbumController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Album> updateAlbum(@PathVariable Long id, @RequestBody UpdateAlbumRequest request) {
+    public ResponseEntity<AlbumResponse> updateAlbum(@PathVariable Long id, @RequestBody UpdateAlbumRequest request) {
         Album updated = albumService.updateAlbum(id, request);
-        return ResponseEntity.ok(updated);
+        return ResponseEntity.ok(AlbumResponse.from(updated));
     }
 
     @DeleteMapping("/{id}")

@@ -1,6 +1,7 @@
 package fcul.modc.requests.albums;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class UpdateAlbumRequest {
@@ -12,10 +13,16 @@ public class UpdateAlbumRequest {
     @Size(max = 500)
     private String description;
 
+    @NotNull
+    private Long ownerId;
+
     // Getters & Setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public Long getOwnerId() { return ownerId; }
+    public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
 }

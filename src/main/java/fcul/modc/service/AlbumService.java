@@ -2,6 +2,7 @@ package fcul.modc.service;
 
 import fcul.modc.exceptions.album.AlbumAlreadyExistsException;
 import fcul.modc.exceptions.album.AlbumNotFoundException;
+import fcul.modc.exceptions.album.AlbumOwnerMismatchException;
 import fcul.modc.exceptions.user.UserNotFoundException;
 import fcul.modc.model.Album;
 import fcul.modc.model.User;
@@ -60,6 +61,20 @@ public class AlbumService {
     public Album updateAlbum(Long albumId, UpdateAlbumRequest request) {
         Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + albumId));
+
+        if (!album.getOwner().getId().equals(request.getOwnerId())) {
+            throw new AlbumOwnerMismatchException(
+                    "User with id " + request.getOwnerId() + " is not the owner of album id " + albumId
+            );
+        }
+
+        boolean exists = albumRepository.findByOwner(album.getOwner()).stream()
+                .anyMatch(a -> !a.getId().equals(albumId) && a.getName().equalsIgnoreCase(request.getName()));
+        if (exists) {
+            throw new AlbumAlreadyExistsException(
+                    "Another album already exists with name: '" + request.getName() + "' for user id: " + album.getOwner().getId()
+            );
+        }
 
         album.setName(request.getName());
         album.setDescription(request.getDescription());
