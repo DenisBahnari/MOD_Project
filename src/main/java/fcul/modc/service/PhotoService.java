@@ -54,13 +54,14 @@ public class PhotoService {
         metadata.setSize(request.getFile().getSize());
         metadata.setUploadTime(LocalDateTime.now());
         metadata.setDescription(request.getDescription());
-        metadata.setPhoto(photo);
+
 
         photo.setMetadata(metadata);
+        metadata.setPhoto(photo);
 
-        photoMetadataRepository.save(metadata);
+        Photo savedPhoto = photoRepository.save(photo);
 
-        return PhotoResponse.from(photo);
+        return PhotoResponse.from(savedPhoto);
     }
 
     public PhotoResponse updatePhoto(Long photoId, UpdatePhotoRequest request) {

@@ -28,8 +28,7 @@ public class PhotoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PhotoResponse> updatePhoto(@PathVariable Long id,
-                                                     @RequestBody UpdatePhotoRequest request) {
+    public ResponseEntity<PhotoResponse> updatePhoto(@PathVariable Long id, @RequestBody UpdatePhotoRequest request) {
         PhotoResponse updated = photoService.updatePhoto(id, request);
         return ResponseEntity.ok(updated);
     }
