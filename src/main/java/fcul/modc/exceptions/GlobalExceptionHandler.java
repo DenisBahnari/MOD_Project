@@ -22,8 +22,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
-    // ##### Users Exceptions #####
 
+    // ##### Users Exceptions #####
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
         return ResponseEntity.status(404).body(new ErrorResponse(ex.getMessage(), 404));
@@ -33,6 +33,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUserAlreadyExists(UserAlreadyExistsException ex) {
         return ResponseEntity.status(404).body(new ErrorResponse(ex.getMessage(), 409));
     }
-
     // ##### Users Exceptions #####
+
+
+
+    // ##### Album Exceptions #####
+
+
+
+    // ##### Album Exceptions #####
 }

@@ -1,11 +1,15 @@
 package fcul.modc.service;
 
+import fcul.modc.exceptions.album.AlbumAlreadyExistsException;
+import fcul.modc.exceptions.album.AlbumNotFoundException;
+import fcul.modc.exceptions.user.UserNotFoundException;
 import fcul.modc.model.Album;
 import fcul.modc.model.User;
 import fcul.modc.repository.AlbumRepository;
+import fcul.modc.repository.UserRepository;
+import fcul.modc.requests.albums.UpdateAlbumRequest;
 import fcul.modc.responses.albums.AlbumResponse;
 import fcul.modc.requests.albums.CreateAlbumRequest;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,26 +18,57 @@ import java.util.List;
 public class AlbumService {
 
     private final AlbumRepository albumRepository;
+    private final UserRepository userRepository;
 
-    public AlbumService(AlbumRepository albumRepository){
+    public AlbumService(AlbumRepository albumRepository, UserRepository userRepository) {
         this.albumRepository = albumRepository;
+        this.userRepository = userRepository;
     }
 
     public AlbumResponse getAlbum(Long id) {
         Album album = albumRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Album not found with id: " + id));
+                .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + id));
         return AlbumResponse.from(album);
     }
 
-    public List<AlbumResponse> getAlbumsByOwner(User owner) {
+    public List<AlbumResponse> getAlbumsByOwner(Long ownerId) {
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + ownerId));
         return albumRepository.findByOwner(owner)
                 .stream()
                 .map(AlbumResponse::from)
                 .toList();
     }
 
-    public Album createAlbum(CreateAlbumRequest request, User owner) {
+    public Album createAlbum(CreateAlbumRequest request) {
+        User owner = userRepository.findById(request.getOwnerId())
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + request.getOwnerId()));
+
+        boolean exists = albumRepository.findByOwner(owner).stream()
+                .anyMatch(a -> a.getName().equalsIgnoreCase(request.getName()));
+        if (exists) {
+            throw new AlbumAlreadyExistsException(
+                    "Album already exists with name: '" + request.getName() + "' for user id: " + owner.getId()
+            );
+        }
+
         Album album = new Album(request.getName(), owner);
+        album.setDescription(request.getDescription());
         return albumRepository.save(album);
+    }
+
+    public Album updateAlbum(Long albumId, UpdateAlbumRequest request) {
+        Album album = albumRepository.findById(albumId)
+                .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + albumId));
+
+        album.setName(request.getName());
+        album.setDescription(request.getDescription());
+        return albumRepository.save(album);
+    }
+
+    public void deleteAlbum(Long albumId) {
+        Album album = albumRepository.findById(albumId)
+                .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + albumId));
+        albumRepository.delete(album);
     }
 }
