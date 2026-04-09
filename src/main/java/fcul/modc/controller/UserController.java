@@ -1,6 +1,7 @@
 package fcul.modc.controller;
 
 import fcul.modc.requests.users.CreateUserRequest;
+import fcul.modc.requests.users.UpdateUserRequest;
 import fcul.modc.responses.users.UserResponse;
 import fcul.modc.service.UserService;
 import jakarta.validation.Valid;
@@ -31,5 +32,17 @@ public class UserController {
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         UserResponse user = userService.getUserById(id);
         return ResponseEntity.ok(user);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponse> updateUserById(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
+        UserResponse updatedUser = userService.updateUserName(id, request.getUsername());
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUserById(@PathVariable Long id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }
