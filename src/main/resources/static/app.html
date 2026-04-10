@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumora - Photo Gallery</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+<div class="shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-top">
+            <div class="logo-mark">
+                <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="5" width="16" height="12" rx="2" stroke="#0e0d0b" stroke-width="1.5"/>
+                    <circle cx="10" cy="11" r="3" stroke="#0e0d0b" stroke-width="1.5"/>
+                    <path d="M7 5L8.5 2.5H11.5L13 5" stroke="#0e0d0b" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+            </div>
+            <span class="logo-name">Lumora</span>
+        </div>
+        <div class="sidebar-label">
+            Albums
+            <button id="newAlbumBtn" title="New album">+</button>
+        </div>
+        <div class="album-list" id="albumList">
+            <div style="padding:20px 10px;color:var(--muted);font-size:13px;text-align:center;">Loading…</div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="user-row">
+                <div class="avatar" id="userAvatar">?</div>
+                <div class="user-info">
+                    <div class="user-name" id="userNameEl">—</div>
+                    <div class="sign-out" id="signOutBtn">Sign out</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="topbar">
+            <div class="topbar-left">
+                <span class="topbar-title" id="mainTitle">Select an album</span>
+                <span class="topbar-sub" id="mainSub"></span>
+            </div>
+            <div class="topbar-right" id="topbarActions" style="display:none;">
+                <button class="btn" id="editAlbumBtn">Edit album</button>
+                <button class="btn btn-danger" id="deleteAlbumBtn">Delete</button>
+                <button class="btn btn-accent" id="uploadPhotoBtn">+ Upload photo</button>
+            </div>
+        </div>
+        <div class="content" id="mainContent">
+            <div class="empty-state">
+                <div class="empty-icon">📷</div>
+                <h3>Your photos live here</h3>
+                <p>Select an album from the sidebar, or create a new one to get started.</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal: New album -->
+<div class="modal-overlay" id="newAlbumModal">
+    <div class="modal">
+        <h3>New album</h3>
+        <div class="field"><label>Name</label><input type="text" id="newAlbumName" placeholder="Album name" /></div>
+        <div class="field"><label>Description (optional)</label><textarea id="newAlbumDesc" placeholder="What's this album about?"></textarea></div>
+        <div class="modal-actions">
+            <button class="btn" id="cancelNewAlbumBtn">Cancel</button>
+            <button class="btn btn-accent" id="createAlbumBtn">Create album</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit album -->
+<div class="modal-overlay" id="editAlbumModal">
+    <div class="modal">
+        <h3>Edit album</h3>
+        <div class="field"><label>Name</label><input type="text" id="editAlbumName" /></div>
+        <div class="field"><label>Description</label><textarea id="editAlbumDesc"></textarea></div>
+        <div class="modal-actions">
+            <button class="btn" id="cancelEditAlbumBtn">Cancel</button>
+            <button class="btn btn-accent" id="saveAlbumBtn">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Upload photo -->
+<div class="modal-overlay" id="uploadModal">
+    <div class="modal">
+        <h3>Upload photo</h3>
+        <div class="upload-area" id="uploadArea">
+            <div style="font-size:32px;opacity:0.4;">📸</div>
+            <p><strong>Click to choose</strong> or drag & drop</p>
+            <p>JPEG, PNG, GIF, WEBP</p>
+            <div class="upload-preview" id="uploadPreview"></div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" />
+        <div class="field"><label>Description (optional)</label><input type="text" id="uploadDesc" placeholder="Add a description…" /></div>
+        <div class="modal-actions">
+            <button class="btn" id="cancelUploadBtn">Cancel</button>
+            <button class="btn btn-accent" id="uploadBtn">Upload</button>
+        </div>
+    </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxCloseBtn">✕</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+    <div class="lightbox-info">
+        <h4 id="lightboxName"></h4>
+        <p id="lightboxMeta"></p>
+    </div>
+    <div class="lightbox-actions">
+        <button class="btn btn-danger" id="deletePhotoBtn">Delete photo</button>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

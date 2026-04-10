@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumora — Sign in</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/index.css" />
+</head>
+<body>
+<div class="card">
+    <div class="logo">
+        <div class="logo-mark">
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="5" width="16" height="12" rx="2" stroke="#0e0d0b" stroke-width="1.5"/>
+                <circle cx="10" cy="11" r="3" stroke="#0e0d0b" stroke-width="1.5"/>
+                <path d="M7 5L8.5 2.5H11.5L13 5" stroke="#0e0d0b" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <span class="logo-name">Lumora</span>
+    </div>
+
+    <!-- Login -->
+    <div id="loginPanel" class="panel active">
+        <h1>Welcome back</h1>
+        <p class="subtitle">Sign in to your photo library</p>
+        <div id="loginError" class="error-msg"></div>
+        <div class="field">
+            <label>Username</label>
+            <input type="text" id="loginUsername" placeholder="your username" autocomplete="username" />
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button class="btn" id="loginBtn">Sign in</button>
+        <div class="divider">or</div>
+        <div class="register-link">No account? <a href="#" id="showRegisterLink">Create one</a></div>
+    </div>
+
+    <!-- Register -->
+    <div id="registerPanel" class="panel">
+        <button class="back-btn" id="backToLoginBtn">← Back to sign in</button>
+        <h1>Create account</h1>
+        <p class="subtitle">Start your photo library today</p>
+        <div id="registerError" class="error-msg"></div>
+        <div class="field">
+            <label>Username</label>
+            <input type="text" id="regUsername" placeholder="choose a username" />
+        </div>
+        <div class="field">
+            <label>Password</label>
+            <input type="password" id="regPassword" placeholder="choose a password" />
+        </div>
+        <button class="btn" id="registerBtn">Create account</button>
+    </div>
+</div>
+
+<script src="js/index.js"></script>
+</body>
+</html>
