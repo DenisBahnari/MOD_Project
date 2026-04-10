@@ -55,7 +55,7 @@ class PhotoControllerIntegrationTest {
         userRepository.deleteAll();
 
         user = new User();
-        user.setUsername("denis");
+        user.setUsername("jojo");
         user.setPassword(passwordEncoder.encode("1234"));
         user = userRepository.save(user);
 
@@ -79,7 +79,7 @@ class PhotoControllerIntegrationTest {
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
                         .param("description", "Test photo")
-                        .with(httpBasic("denis", "1234")))
+                        .with(httpBasic("jojo", "1234")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.filename").value("test-image.png"))
@@ -104,13 +104,13 @@ class PhotoControllerIntegrationTest {
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
                         .param("description", "Test photo")
-                        .with(httpBasic("denis", "1234")))
+                        .with(httpBasic("jojo", "1234")))
                 .andReturn().getResponse().getContentAsString();
 
         Number photoIdNumber = JsonPath.read(response, "$.id");
         Long photoId = photoIdNumber.longValue();
 
-        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("denis", "1234"))
+        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("jojo", "1234"))
                 .param("requesterId", String.valueOf(user.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(photoId))
@@ -134,7 +134,7 @@ class PhotoControllerIntegrationTest {
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
                         .param("description", "Test photo")
-                        .with(httpBasic("denis", "1234")))
+                        .with(httpBasic("jojo", "1234")))
                 .andReturn().getResponse().getContentAsString();
 
         Number photoIdNumber = JsonPath.read(response, "$.id");
@@ -150,7 +150,7 @@ class PhotoControllerIntegrationTest {
         mockMvc.perform(put("/photos/" + photoId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updateJson)
-                        .with(httpBasic("denis", "1234")))
+                        .with(httpBasic("jojo", "1234")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.description").value("Updated description"));
     }
@@ -173,7 +173,7 @@ class PhotoControllerIntegrationTest {
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
                         .param("description", "Test photo")
-                        .with(httpBasic("denis", "1234")))
+                        .with(httpBasic("jojo", "1234")))
                 .andReturn().getResponse().getContentAsString();
 
         Number photoIdNumber = JsonPath.read(response, "$.id");
@@ -182,11 +182,11 @@ class PhotoControllerIntegrationTest {
         // --- Cenário 1: dono apaga a foto com sucesso ---
         mockMvc.perform(delete("/photos/" + photoId)
                         .param("ownerId", user.getId().toString())
-                        .with(httpBasic("denis", "1234")))
+                        .with(httpBasic("jojo", "1234")))
                 .andExpect(status().isNoContent());
 
         // Verificar que a foto não existe mais
-        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("denis", "1234"))
+        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("jojo", "1234"))
                 .param("requesterId", String.valueOf(user.getId())))
                 .andExpect(status().isNotFound());
 
@@ -210,7 +210,7 @@ class PhotoControllerIntegrationTest {
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
                         .param("description", "Test photo 2")
-                        .with(httpBasic("denis", "1234")))
+                        .with(httpBasic("jojo", "1234")))
                 .andReturn().getResponse().getContentAsString();
 
         long photoId2 = ((Number) JsonPath.read(response2, "$.id")).longValue();

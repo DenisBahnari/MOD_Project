@@ -40,7 +40,7 @@ class UserControllerIntegrationTest {
     void testCreateUser() throws Exception {
         String json = """
         {
-            "username": "denis",
+            "username": "jojo",
             "password": "1234"
         }
         """;
@@ -49,20 +49,20 @@ class UserControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.username").value("denis"))
+                .andExpect(jsonPath("$.username").value("jojo"))
                 .andExpect(jsonPath("$.id").exists());
     }
 
     @Test
     void testCreateDuplicateUser() throws Exception {
         User user = new User();
-        user.setUsername("denis");
+        user.setUsername("jojo");
         user.setPassword(passwordEncoder.encode("1234"));
         userRepository.save(user);
 
         String json = """
         {
-            "username": "denis",
+            "username": "jojo",
             "password": "1234"
         }
         """;
@@ -76,7 +76,7 @@ class UserControllerIntegrationTest {
     @Test
     void testUpdateUser() throws Exception {
         User user = new User();
-        user.setUsername("denis");
+        user.setUsername("jojo");
         user.setPassword(passwordEncoder.encode("1234"));
         user = userRepository.save(user);
 
@@ -90,7 +90,7 @@ class UserControllerIntegrationTest {
         mockMvc.perform(put("/users/" + user.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json)
-                        .with(httpBasic("denis", "1234")))
+                        .with(httpBasic("jojo", "1234")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("alex"));
     }
@@ -98,11 +98,11 @@ class UserControllerIntegrationTest {
     @Test
     void testDeleteUser() throws Exception {
         User user = new User();
-        user.setUsername("denis");
+        user.setUsername("jojo");
         user.setPassword(passwordEncoder.encode("1234"));
         user = userRepository.save(user);
 
-        mockMvc.perform(delete("/users/" + user.getId()).with(httpBasic("denis", "1234")))
+        mockMvc.perform(delete("/users/" + user.getId()).with(httpBasic("jojo", "1234")))
                 .andExpect(status().isNoContent());
 
     }
