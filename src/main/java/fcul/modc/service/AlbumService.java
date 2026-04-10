@@ -16,13 +16,9 @@ import fcul.modc.requests.albums.RemoveSharedUserRequest;
 import fcul.modc.requests.albums.UpdateAlbumRequest;
 import fcul.modc.responses.albums.AlbumResponse;
 import fcul.modc.requests.albums.CreateAlbumRequest;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class AlbumService {
@@ -30,35 +26,20 @@ public class AlbumService {
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     public AlbumService(AlbumRepository albumRepository, UserRepository userRepository) {
         this.albumRepository = albumRepository;
         this.userRepository = userRepository;
     }
 
-    public AlbumResponse getAlbum(Long id, Long requesterId) {
+    public AlbumResponse getAlbum(Long id, String username) {
         Album album = albumRepository.findById(id)
                 .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + id));
-        validateAccess(album, requesterId);
+        validateAccess(album, resolveUser(username));
         return AlbumResponse.from(album);
     }
 
-    private void validateAccess(Album album, Long requesterId) {
-        boolean isOwner = album.getOwner().getId().equals(requesterId);
-        boolean isShared = album.getSharedUsers().stream()
-                .anyMatch(u -> u.getId().equals(requesterId));
-        if (!isOwner && !isShared) {
-            throw new AlbumAccessDeniedException(
-                    "User with id " + requesterId + " does not have access to album id " + album.getId()
-            );
-        }
-    }
-
-    public List<AlbumResponse> getAlbumsByOwner(Long ownerId) {
-        User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + ownerId));
+    public List<AlbumResponse> getAlbumsByOwner(String username) {
+        User owner = resolveUser(username);
         return albumRepository.findByOwner(owner)
                 .stream()
                 .map(AlbumResponse::from)
@@ -124,7 +105,9 @@ public class AlbumService {
         User target = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + request.getUserId()));
 
-        if (album.getSharedUsers().contains(target)) {
+        boolean alreadyShared = album.getSharedUsers().stream()
+                .anyMatch(u -> u.getId().equals(target.getId()));
+        if (alreadyShared) {
             throw new AlbumUserAlreadySharedException(
                     "User with id " + target.getId() + " already has access to album id " + albumId
             );
@@ -147,7 +130,9 @@ public class AlbumService {
         User target = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + request.getUserId()));
 
-        if (!album.getSharedUsers().contains(target)) {
+        boolean isShared = album.getSharedUsers().stream()
+                .anyMatch(u -> u.getId().equals(target.getId()));
+        if (!isShared) {
             throw new AlbumUserNotSharedException(
                     "User with id " + target.getId() + " does not have access to album id " + albumId
             );
@@ -157,22 +142,34 @@ public class AlbumService {
         return AlbumResponse.from(albumRepository.save(album));
     }
 
-    public List<AlbumResponse> getSharedAlbums(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+    public List<AlbumResponse> getSharedAlbums(String username) {
+        User user = resolveUser(username);
         return albumRepository.findBySharedUsersContaining(user)
                 .stream()
                 .map(AlbumResponse::from)
                 .toList();
     }
 
-    // name=' UNION SELECT id, id, username, username FROM app_user --
-    @SuppressWarnings("unchecked")
-    public List<Map<String, Object>> searchAlbumsByName(String name) {
-        String sql = "SELECT * FROM album WHERE name = '" + name + "'";
-        Query query = entityManager.createNativeQuery(sql); // no entity class mapping
-        query.unwrap(org.hibernate.query.NativeQuery.class)
-                .setResultTransformer(org.hibernate.transform.AliasToEntityMapResultTransformer.INSTANCE);
-        return query.getResultList();
+    public List<AlbumResponse> searchAlbumsByName(String name) {
+        return albumRepository.findByNameIgnoreCase(name)
+                .stream()
+                .map(AlbumResponse::from)
+                .toList();
+    }
+
+    private User resolveUser(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+    }
+
+    private void validateAccess(Album album, User requester) {
+        boolean isOwner = album.getOwner().getId().equals(requester.getId());
+        boolean isShared = album.getSharedUsers().stream()
+                .anyMatch(u -> u.getId().equals(requester.getId()));
+        if (!isOwner && !isShared) {
+            throw new AlbumAccessDeniedException(
+                    "User '" + requester.getUsername() + "' does not have access to album id " + album.getId()
+            );
+        }
     }
 }

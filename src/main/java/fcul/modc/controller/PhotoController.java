@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -61,24 +62,24 @@ public class PhotoController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePhoto(@PathVariable Long id, @RequestParam Long ownerId) {
-        photoService.deletePhoto(id, ownerId);
+    public ResponseEntity<Void> deletePhoto(@PathVariable Long id, Authentication auth) {
+        photoService.deletePhoto(id, auth.getName());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PhotoResponse> getPhoto(@PathVariable Long id, @RequestParam Long requesterId) {
-        return ResponseEntity.ok(photoService.getPhotoById(id, requesterId));
+    public ResponseEntity<PhotoResponse> getPhoto(@PathVariable Long id, Authentication auth) {
+        return ResponseEntity.ok(photoService.getPhotoById(id, auth.getName()));
     }
 
     @GetMapping("/{id}/data")
-    public ResponseEntity<byte[]> getPhotoData(@PathVariable Long id, @RequestParam Long requesterId) {
-        byte[] data = photoService.getPhotoData(id, requesterId);
+    public ResponseEntity<byte[]> getPhotoData(@PathVariable Long id) {
+        byte[] data = photoService.getPhotoData(id);
         return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(data);
     }
 
     @GetMapping("/album/{albumId}")
-    public ResponseEntity<List<PhotoResponse>> getPhotosByAlbum(@PathVariable Long albumId, @RequestParam Long requesterId) {
-        return ResponseEntity.ok(photoService.getPhotosByAlbum(albumId, requesterId));
+    public ResponseEntity<List<PhotoResponse>> getPhotosByAlbum(@PathVariable Long albumId, Authentication auth) {
+        return ResponseEntity.ok(photoService.getPhotosByAlbum(albumId, auth.getName()));
     }
 }

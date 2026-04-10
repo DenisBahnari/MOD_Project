@@ -8,11 +8,11 @@ import fcul.modc.responses.albums.AlbumResponse;
 import fcul.modc.requests.albums.CreateAlbumRequest;
 import fcul.modc.service.AlbumService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/albums")
@@ -25,13 +25,13 @@ public class AlbumController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AlbumResponse> getAlbum(@PathVariable Long id, @RequestParam Long requesterId) {
-        return ResponseEntity.ok(albumService.getAlbum(id, requesterId));
+    public ResponseEntity<AlbumResponse> getAlbum(@PathVariable Long id, Authentication auth) {
+        return ResponseEntity.ok(albumService.getAlbum(id, auth.getName()));
     }
 
     @GetMapping
-    public ResponseEntity<List<AlbumResponse>> getAlbumsByOwner(@RequestParam Long ownerId) {
-        return ResponseEntity.ok(albumService.getAlbumsByOwner(ownerId));
+    public ResponseEntity<List<AlbumResponse>> getAlbumsByOwner(Authentication auth) {
+        return ResponseEntity.ok(albumService.getAlbumsByOwner(auth.getName()));
     }
 
     @PostMapping
@@ -67,12 +67,12 @@ public class AlbumController {
     }
 
     @GetMapping("/shared")
-    public ResponseEntity<List<AlbumResponse>> getSharedAlbums(@RequestParam Long userId) {
-        return ResponseEntity.ok(albumService.getSharedAlbums(userId));
+    public ResponseEntity<List<AlbumResponse>> getSharedAlbums(Authentication auth) {
+        return ResponseEntity.ok(albumService.getSharedAlbums(auth.getName()));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Map<String, Object>>> searchAlbums(@RequestParam String name) {
+    public ResponseEntity<List<AlbumResponse>> searchAlbums(@RequestParam String name) {
         return ResponseEntity.ok(albumService.searchAlbumsByName(name));
     }
 }

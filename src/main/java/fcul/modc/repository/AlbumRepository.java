@@ -11,4 +11,5 @@ import java.util.List;
 public interface AlbumRepository extends JpaRepository<Album, Long> {
     List<Album> findByOwner(User owner);
     List<Album> findBySharedUsersContaining(User user);
+    List<Album> findByNameIgnoreCase(String name);
 }

@@ -4,9 +4,11 @@ import fcul.modc.exceptions.album.AlbumAccessDeniedException;
 import fcul.modc.exceptions.album.AlbumNotFoundException;
 import fcul.modc.exceptions.photo.PhotoNotFoundException;
 import fcul.modc.exceptions.photo.PhotoOwnerMismatchException;
+import fcul.modc.exceptions.user.UserNotFoundException;
 import fcul.modc.model.Album;
 import fcul.modc.model.Photo;
 import fcul.modc.model.PhotoMetadata;
+import fcul.modc.model.User;
 import fcul.modc.repository.AlbumRepository;
 import fcul.modc.repository.PhotoMetadataRepository;
 import fcul.modc.repository.PhotoRepository;
@@ -31,12 +33,14 @@ public class PhotoService {
     private final PhotoRepository photoRepository;
     private final AlbumRepository albumRepository;
     private final PhotoMetadataRepository photoMetadataRepository;
+    private final UserRepository userRepository;
 
     public PhotoService(PhotoRepository photoRepository, AlbumRepository albumRepository,
-                        PhotoMetadataRepository photoMetadataRepository) {
+                        PhotoMetadataRepository photoMetadataRepository, UserRepository userRepository) {
         this.photoRepository = photoRepository;
         this.albumRepository = albumRepository;
         this.photoMetadataRepository = photoMetadataRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -44,7 +48,6 @@ public class PhotoService {
         logger.info("=== PHOTO SERVICE: createPhoto START ===");
         logger.info("Request: albumId={}, ownerId={}", request.getAlbumId(), request.getOwnerId());
 
-        // Validate album exists
         logger.info("Looking for album with ID: {}", request.getAlbumId());
         Album album = albumRepository.findById(request.getAlbumId())
                 .orElseThrow(() -> {
@@ -53,7 +56,6 @@ public class PhotoService {
                 });
         logger.info("Album found: ID={}, Name={}, Owner ID={}", album.getId(), album.getName(), album.getOwner().getId());
 
-        // Check ownership
         logger.info("Verifying ownership - Album owner ID: {}, Request owner ID: {}",
                 album.getOwner().getId(), request.getOwnerId());
         if (!album.getOwner().getId().equals(request.getOwnerId())) {
@@ -65,7 +67,6 @@ public class PhotoService {
         }
         logger.info("Ownership verified successfully");
 
-        // Create photo entity
         Photo photo = new Photo();
         logger.info("Reading file bytes...");
         byte[] fileBytes = request.getFile().getBytes();
@@ -73,7 +74,6 @@ public class PhotoService {
         photo.setData(fileBytes);
         photo.setAlbum(album);
 
-        // Create metadata
         PhotoMetadata metadata = new PhotoMetadata();
         metadata.setFilename(request.getFile().getOriginalFilename());
         metadata.setSize(request.getFile().getSize());
@@ -83,11 +83,9 @@ public class PhotoService {
         logger.info("Metadata created: filename={}, size={}, description={}",
                 metadata.getFilename(), metadata.getSize(), metadata.getDescription());
 
-        // Set bidirectional relationship
         photo.setMetadata(metadata);
         metadata.setPhoto(photo);
 
-        // Save photo (cascade will save metadata)
         logger.info("Saving photo to database...");
         Photo savedPhoto = photoRepository.save(photo);
         logger.info("Photo saved with ID: {}", savedPhoto.getId());
@@ -116,30 +114,31 @@ public class PhotoService {
         return PhotoResponse.from(photo);
     }
 
-    public void deletePhoto(Long photoId, Long ownerId) {
+    public void deletePhoto(Long photoId, String username) {
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo not found with id: " + photoId));
 
-        if (!photo.getAlbum().getOwner().getId().equals(ownerId)) {
+        User requester = resolveUser(username);
+        if (!photo.getAlbum().getOwner().getId().equals(requester.getId())) {
             throw new PhotoOwnerMismatchException(
-                    "User with id " + ownerId + " is not the owner of album id " + photo.getAlbum().getId()
+                    "User '" + username + "' is not the owner of album id " + photo.getAlbum().getId()
             );
         }
 
         photoRepository.delete(photo);
     }
 
-    public PhotoResponse getPhotoById(Long id, Long requesterId) {
+    public PhotoResponse getPhotoById(Long id, String username) {
         Photo photo = photoRepository.findById(id)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo not found with id: " + id));
-        validateAccess(photo.getAlbum(), requesterId);
+        validateAccess(photo.getAlbum(), resolveUser(username));
         return PhotoResponse.from(photo);
     }
 
-    public List<PhotoResponse> getPhotosByAlbum(Long albumId, Long requesterId) {
+    public List<PhotoResponse> getPhotosByAlbum(Long albumId, String username) {
         Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + albumId));
-        validateAccess(album, requesterId);
+        validateAccess(album, resolveUser(username));
         return photoRepository.findByAlbum(album)
                 .stream()
                 .map(PhotoResponse::from)
@@ -147,20 +146,24 @@ public class PhotoService {
     }
 
     // Access not being validated on purpose.
-    public byte[] getPhotoData(Long photoId, Long requesterId) {
+    public byte[] getPhotoData(Long photoId) {
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo not found with id: " + photoId));
-
         return photo.getData();
     }
 
-    private void validateAccess(Album album, Long requesterId) {
-        boolean isOwner = album.getOwner().getId().equals(requesterId);
+    private User resolveUser(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
+    }
+
+    private void validateAccess(Album album, User requester) {
+        boolean isOwner = album.getOwner().getId().equals(requester.getId());
         boolean isShared = album.getSharedUsers().stream()
-                .anyMatch(u -> u.getId().equals(requesterId));
+                .anyMatch(u -> u.getId().equals(requester.getId()));
         if (!isOwner && !isShared) {
             throw new AlbumAccessDeniedException(
-                    "User with id " + requesterId + " does not have access to album id " + album.getId()
+                    "User '" + requester.getUsername() + "' does not have access to album id " + album.getId()
             );
         }
     }
