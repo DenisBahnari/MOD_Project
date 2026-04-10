@@ -374,27 +374,6 @@ html, body {
     margin-top: 2px;
 }
 
-/* Album header */
-.album-header {
-    margin-bottom: 20px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.album-header-info h2 {
-    font-size: 20px;
-    font-weight: 500;
-}
-
-.album-header-info p {
-    font-size: 14px;
-    color: var(--muted);
-    margin-top: 4px;
-}
-
 /* Modal */
 .modal-overlay {
     display: none;
@@ -625,4 +604,77 @@ html, body {
 ::-webkit-scrollbar-thumb {
     background: rgba(255,255,255,0.1);
     border-radius: 3px;
+}
+
+/* Shared users list */
+.shared-user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.shared-user-item:last-child {
+    border-bottom: none;
+}
+
+.shared-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.shared-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    color: var(--accent);
+}
+
+.shared-user-details {
+    flex: 1;
+}
+
+.shared-user-name {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.shared-user-role {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.remove-user-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: var(--danger);
+    cursor: pointer;
+}
+
+.remove-user-btn:hover {
+    background: rgba(224,82,82,0.1);
+}
+
+/* Album type indicator */
+.album-type {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    margin-left: 8px;
+}
+
+.album-item.shared .album-dot {
+    background: var(--accent);
 }

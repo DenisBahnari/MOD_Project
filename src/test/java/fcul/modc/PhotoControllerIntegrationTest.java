@@ -110,7 +110,8 @@ class PhotoControllerIntegrationTest {
         Number photoIdNumber = JsonPath.read(response, "$.id");
         Long photoId = photoIdNumber.longValue();
 
-        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("denis", "1234")))
+        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("denis", "1234"))
+                .param("requesterId", String.valueOf(user.getId())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(photoId))
                 .andExpect(jsonPath("$.filename").value("test-image.png"));
@@ -185,7 +186,8 @@ class PhotoControllerIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // Verificar que a foto não existe mais
-        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("denis", "1234")))
+        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("denis", "1234"))
+                .param("requesterId", String.valueOf(user.getId())))
                 .andExpect(status().isNotFound());
 
         // --- Cenário 2: outro usuário tenta apagar a foto ---

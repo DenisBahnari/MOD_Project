@@ -6,52 +6,67 @@ const API = {
             console.error('API: No authentication token found');
             throw new Error('No authentication token found');
         }
-        console.log('API: Auth header present (length:', authHeader.length, ')');
         return authHeader;
     },
 
+    getCurrentUserId() {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            console.error('API: No user ID found');
+            throw new Error('No user ID found');
+        }
+        return parseInt(userId);
+    },
+
+    // Helper to add requesterId to URL if needed
+    addRequesterId(url, method = 'GET') {
+        // Only add requesterId to GET and DELETE requests
+        if (method !== 'GET' && method !== 'DELETE') {
+            return url;
+        }
+
+        // Check if URL already has requesterId or userId
+        if (url.includes('requesterId') || url.includes('userId')) {
+            return url;
+        }
+
+        // For /albums/shared, backend expects 'userId' not 'requesterId'
+        if (url.includes('/albums/shared')) {
+            const separator = url.includes('?') ? '&' : '?';
+            return `${url}${separator}userId=${this.getCurrentUserId()}`;
+        }
+
+        const separator = url.includes('?') ? '&' : '?';
+        return `${url}${separator}requesterId=${this.getCurrentUserId()}`;
+    },
+
     async request(endpoint, options = {}) {
-        console.log(`API.request: ${options.method || 'GET'} ${endpoint}`);
+        const method = options.method || 'GET';
+
+        let finalEndpoint = this.addRequesterId(endpoint, method);
+        console.log(`API.request: ${method} ${finalEndpoint}`);
 
         const headers = {
-            'Authorization': this.getAuthHeader(),
-            ...(options.headers || {})
+            'Authorization': this.getAuthHeader()
         };
 
-        // Only add Content-Type for non-FormData requests
         if (!(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
-            console.log('API.request: Setting Content-Type to application/json');
-        } else {
-            console.log('API.request: Using FormData, letting browser set Content-Type');
-            // Log FormData contents for debugging
-            console.log('API.request: FormData contents:');
-            for (let pair of options.body.entries()) {
-                if (pair[0] === 'file') {
-                    console.log(`  - ${pair[0]}: ${pair[1].name} (${pair[1].size} bytes, type: ${pair[1].type})`);
-                } else {
-                    console.log(`  - ${pair[0]}: ${pair[1]}`);
-                }
-            }
+        }
+
+        if (options.headers) {
+            Object.assign(headers, options.headers);
         }
 
         const config = {
             ...options,
-            headers
+            headers,
+            credentials: 'include'
         };
 
         try {
-            console.log('API.request: Sending request...');
-            const response = await fetch(endpoint, config);
-            console.log(`API.request: Response status: ${response.status} ${response.statusText}`);
+            const response = await fetch(finalEndpoint, config);
 
-            // Log response headers
-            console.log('API.request: Response headers:', {
-                'content-type': response.headers.get('content-type'),
-                'content-length': response.headers.get('content-length')
-            });
-
-            // Handle unauthorized
             if (response.status === 401) {
                 console.error('API.request: Unauthorized - clearing session');
                 localStorage.clear();
@@ -59,20 +74,23 @@ const API = {
                 throw new Error('Session expired. Please login again.');
             }
 
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+            }
+
             return response;
         } catch (error) {
-            console.error('API.request: Network error:', error);
+            console.error('API.request error:', error);
             throw error;
         }
     },
 
     async get(endpoint) {
-        console.log(`API.get: ${endpoint}`);
-        return this.request(endpoint);
+        return this.request(endpoint, { method: 'GET' });
     },
 
     async post(endpoint, data) {
-        console.log(`API.post: ${endpoint}`);
         const options = {
             method: 'POST',
             body: data instanceof FormData ? data : JSON.stringify(data)
@@ -81,15 +99,18 @@ const API = {
     },
 
     async put(endpoint, data) {
-        console.log(`API.put: ${endpoint}`);
         return this.request(endpoint, {
             method: 'PUT',
             body: JSON.stringify(data)
         });
     },
 
-    async delete(endpoint) {
-        console.log(`API.delete: ${endpoint}`);
-        return this.request(endpoint, { method: 'DELETE' });
+    async delete(endpoint, data = null) {
+        const options = { method: 'DELETE' };
+        if (data) {
+            options.body = JSON.stringify(data);
+            options.headers = { 'Content-Type': 'application/json' };
+        }
+        return this.request(endpoint, options);
     }
 };

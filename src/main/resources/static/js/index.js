@@ -18,11 +18,10 @@ const Auth = {
         btn.textContent = 'Signing in…';
 
         try {
-            // First, verify credentials using a protected endpoint
             const credentials = btoa(username + ':' + password);
             const authHeader = 'Basic ' + credentials;
 
-            // Test if credentials work by trying to access a protected endpoint
+            // Verify credentials by calling a protected endpoint
             const testRes = await fetch('/albums?ownerId=0', {
                 headers: { 'Authorization': authHeader }
             });
@@ -35,29 +34,24 @@ const Auth = {
                 return;
             }
 
-            // Fetch user details to get the ID
+            // Fetch user details
             const userRes = await fetch('/users/by-username/' + encodeURIComponent(username), {
                 headers: { 'Authorization': authHeader }
             });
 
             if (!userRes.ok) throw new Error('Could not fetch user info');
-
             const user = await userRes.json();
 
-            // Store authentication data
             localStorage.setItem('authHeader', authHeader);
             localStorage.setItem('userId', user.id);
             localStorage.setItem('username', user.username);
 
-            // Redirect to app
             window.location.href = 'app.html';
-
         } catch (e) {
             errEl.textContent = 'Could not reach the server. Please try again.';
             errEl.classList.add('visible');
             btn.disabled = false;
             btn.textContent = 'Sign in';
-            console.error('Login error:', e);
         }
     },
 
@@ -92,20 +86,17 @@ const Auth = {
             });
 
             if (res.ok) {
-                // Registration successful, redirect to login
-                this.showPanel('login');
+                Auth.showPanel('login');
                 document.getElementById('loginUsername').value = username;
                 document.getElementById('loginPassword').value = '';
                 document.getElementById('loginPassword').focus();
 
-                // Show success message
                 const successMsg = document.createElement('div');
                 successMsg.className = 'error-msg visible';
                 successMsg.style.backgroundColor = 'rgba(40,180,100,0.1)';
                 successMsg.style.borderColor = 'rgba(40,180,100,0.25)';
                 successMsg.style.color = '#5dca8a';
                 successMsg.textContent = 'Account created successfully! Please sign in.';
-
                 const loginError = document.getElementById('loginError');
                 loginError.parentNode.insertBefore(successMsg, loginError.nextSibling);
                 setTimeout(() => successMsg.remove(), 3000);
@@ -117,7 +108,6 @@ const Auth = {
         } catch (e) {
             errEl.textContent = 'Could not reach the server.';
             errEl.classList.add('visible');
-            console.error('Registration error:', e);
         }
 
         btn.disabled = false;
@@ -130,32 +120,40 @@ const Auth = {
     },
 
     init() {
-        // Check if already logged in
-        if (localStorage.getItem('authHeader') && localStorage.getItem('userId')) {
-            window.location.href = 'app.html';
-            return;
+        localStorage.removeItem('authHeader');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('username');
+
+        const loginBtn = document.getElementById('loginBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const showRegisterLink = document.getElementById('showRegisterLink');
+        const backToLoginBtn = document.getElementById('backToLoginBtn');
+
+        if (loginBtn) loginBtn.addEventListener('click', () => Auth.doLogin());
+        if (registerBtn) registerBtn.addEventListener('click', () => Auth.doRegister());
+        if (showRegisterLink) {
+            showRegisterLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                Auth.showPanel('register');
+            });
+        }
+        if (backToLoginBtn) {
+            backToLoginBtn.addEventListener('click', () => Auth.showPanel('login'));
         }
 
-        // Bind events
-        document.getElementById('loginBtn').addEventListener('click', () => this.doLogin());
-        document.getElementById('registerBtn').addEventListener('click', () => this.doRegister());
-        document.getElementById('showRegisterLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showPanel('register');
-        });
-        document.getElementById('backToLoginBtn').addEventListener('click', () => this.showPanel('login'));
-
-        // Enter key support
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Enter') return;
             if (document.getElementById('loginPanel').classList.contains('active')) {
-                this.doLogin();
+                Auth.doLogin();
             } else {
-                this.doRegister();
+                Auth.doRegister();
             }
         });
     }
 };
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => Auth.init());
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => Auth.init());
+} else {
+    Auth.init();
+}

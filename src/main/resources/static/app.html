@@ -48,6 +48,8 @@
                 <span class="topbar-sub" id="mainSub"></span>
             </div>
             <div class="topbar-right" id="topbarActions" style="display:none;">
+                <button class="btn" id="shareAlbumBtn" style="display:none;">Share</button>
+                <button class="btn" id="viewSharedBtn" style="display:none;">Shared with</button>
                 <button class="btn" id="editAlbumBtn">Edit album</button>
                 <button class="btn btn-danger" id="deleteAlbumBtn">Delete</button>
                 <button class="btn btn-accent" id="uploadPhotoBtn">+ Upload photo</button>
@@ -104,6 +106,55 @@
         <div class="modal-actions">
             <button class="btn" id="cancelUploadBtn">Cancel</button>
             <button class="btn btn-accent" id="uploadBtn">Upload</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Share Album -->
+<div class="modal-overlay" id="shareAlbumModal">
+    <div class="modal">
+        <h3>Share Album</h3>
+        <div class="field">
+            <label>Username to share with</label>
+            <input type="text" id="shareUsernameInput" placeholder="Enter username" />
+        </div>
+        <div id="shareUserInfoPanel" style="display:none; margin-bottom: 16px; padding: 8px; background: var(--accent-dim); border-radius: 8px;">
+            <span id="shareUsernameDisplay"></span> (<span id="shareUserIdDisplay"></span>)
+        </div>
+        <div class="modal-actions">
+            <button class="btn" id="cancelShareButton">Cancel</button>
+            <button class="btn btn-accent" id="confirmShareButton">Share Album</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Remove User from Album -->
+<div class="modal-overlay" id="removeUserModal">
+    <div class="modal">
+        <h3>Remove User from Album</h3>
+        <div class="field">
+            <label>Username to remove</label>
+            <input type="text" id="removeUsernameInput" placeholder="Enter username" />
+        </div>
+        <div id="removeUserInfoPanel" style="display:none; margin-bottom: 16px; padding: 8px; background: var(--accent-dim); border-radius: 8px;">
+            <span id="removeUsernameDisplay"></span> (<span id="removeUserIdDisplay"></span>)
+        </div>
+        <div class="modal-actions">
+            <button class="btn" id="cancelRemoveButton">Cancel</button>
+            <button class="btn btn-danger" id="confirmRemoveButton">Remove User</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: View Shared Users -->
+<div class="modal-overlay" id="sharedUsersModal">
+    <div class="modal" style="max-width: 500px;">
+        <h3>Users with access</h3>
+        <div id="sharedUsersList" style="margin-bottom: 20px;">
+            <div style="padding: 20px; text-align: center; color: var(--muted);">Loading...</div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn" id="closeSharedUsersBtn">Close</button>
         </div>
     </div>
 </div>

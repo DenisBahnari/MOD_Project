@@ -95,7 +95,9 @@ class AlbumControllerIntegrationTest {
         mockMvc.perform(delete("/albums/" + album.getId()).with(httpBasic("denis", "1234")))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/albums/" + album.getId()).with(httpBasic("denis", "1234")))
+        mockMvc.perform(get("/albums/" + album.getId())
+                        .param("requesterId", String.valueOf(owner.getId()))
+                        .with(httpBasic("denis", "1234")))
                 .andExpect(status().isNotFound());
     }
 }
