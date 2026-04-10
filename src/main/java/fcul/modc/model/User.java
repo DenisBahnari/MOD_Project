@@ -15,14 +15,18 @@ public class User {
     @Column(nullable = false, length = 100)
     private String username;
 
+    @Column(nullable = false)
+    private String password;
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Album> albums = new ArrayList<>();
 
     // --- Constructors ---
     public User() {}
 
-    public User(String username) {
+    public User(String username, String hashed) {
         this.username = username;
+        this.password = hashed;
     }
 
     // --- Helper methods ---
@@ -52,4 +56,8 @@ public class User {
     public void setUsername(String username) {
         this.username = username;
     }
+
+    public String getPassword() {return password;}
+
+    public void setPassword(String password) {this.password = password;}
 }

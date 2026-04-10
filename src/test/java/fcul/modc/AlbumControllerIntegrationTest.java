@@ -11,9 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -23,6 +25,9 @@ class AlbumControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private AlbumRepository albumRepository;
@@ -36,7 +41,11 @@ class AlbumControllerIntegrationTest {
     void setup() {
         albumRepository.deleteAll();
         userRepository.deleteAll();
-        owner = userRepository.save(new User("denis"));
+
+        owner = new User();
+        owner.setUsername("denis");
+        owner.setPassword(passwordEncoder.encode("1234"));
+        owner = userRepository.save(owner);
     }
 
     @Test
@@ -51,7 +60,8 @@ class AlbumControllerIntegrationTest {
 
         mockMvc.perform(post("/albums")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json)
+                        .with(httpBasic("denis", "1234")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Holiday"))
                 .andExpect(jsonPath("$.owner.id").value(owner.getId()));
@@ -71,7 +81,8 @@ class AlbumControllerIntegrationTest {
 
         mockMvc.perform(put("/albums/" + album.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
+                        .content(json)
+                        .with(httpBasic("denis", "1234")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Holiday 2026"))
                 .andExpect(jsonPath("$.description").value("Updated desc"));
@@ -81,10 +92,10 @@ class AlbumControllerIntegrationTest {
     void testDeleteAlbum() throws Exception {
         var album = albumRepository.save(new fcul.modc.model.Album("Holiday", owner));
 
-        mockMvc.perform(delete("/albums/" + album.getId()))
+        mockMvc.perform(delete("/albums/" + album.getId()).with(httpBasic("denis", "1234")))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/albums/" + album.getId()))
+        mockMvc.perform(get("/albums/" + album.getId()).with(httpBasic("denis", "1234")))
                 .andExpect(status().isNotFound());
     }
 }

@@ -10,10 +10,14 @@ import fcul.modc.model.PhotoMetadata;
 import fcul.modc.repository.AlbumRepository;
 import fcul.modc.repository.PhotoMetadataRepository;
 import fcul.modc.repository.PhotoRepository;
+import fcul.modc.repository.UserRepository;
 import fcul.modc.requests.photos.CreatePhotoRequest;
 import fcul.modc.requests.photos.UpdatePhotoRequest;
 import fcul.modc.responses.photos.PhotoResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -21,6 +25,8 @@ import java.util.List;
 
 @Service
 public class PhotoService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PhotoService.class);
 
     private final PhotoRepository photoRepository;
     private final AlbumRepository albumRepository;
@@ -33,32 +39,64 @@ public class PhotoService {
         this.photoMetadataRepository = photoMetadataRepository;
     }
 
+    @Transactional
     public PhotoResponse createPhoto(CreatePhotoRequest request) throws IOException {
-        Album album = albumRepository.findById(request.getAlbumId())
-                .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + request.getAlbumId()));
+        logger.info("=== PHOTO SERVICE: createPhoto START ===");
+        logger.info("Request: albumId={}, ownerId={}", request.getAlbumId(), request.getOwnerId());
 
+        // Validate album exists
+        logger.info("Looking for album with ID: {}", request.getAlbumId());
+        Album album = albumRepository.findById(request.getAlbumId())
+                .orElseThrow(() -> {
+                    logger.error("Album not found with id: {}", request.getAlbumId());
+                    return new AlbumNotFoundException("Album not found with id: " + request.getAlbumId());
+                });
+        logger.info("Album found: ID={}, Name={}, Owner ID={}", album.getId(), album.getName(), album.getOwner().getId());
+
+        // Check ownership
+        logger.info("Verifying ownership - Album owner ID: {}, Request owner ID: {}",
+                album.getOwner().getId(), request.getOwnerId());
         if (!album.getOwner().getId().equals(request.getOwnerId())) {
+            logger.error("Owner mismatch! Album owner: {}, Request owner: {}",
+                    album.getOwner().getId(), request.getOwnerId());
             throw new PhotoOwnerMismatchException(
                     "User with id " + request.getOwnerId() + " is not the owner of album id " + album.getId()
             );
         }
+        logger.info("Ownership verified successfully");
 
+        // Create photo entity
         Photo photo = new Photo();
-        photo.setData(request.getFile().getBytes());
+        logger.info("Reading file bytes...");
+        byte[] fileBytes = request.getFile().getBytes();
+        logger.info("File bytes read: {} bytes", fileBytes.length);
+        photo.setData(fileBytes);
         photo.setAlbum(album);
 
+        // Create metadata
         PhotoMetadata metadata = new PhotoMetadata();
         metadata.setFilename(request.getFile().getOriginalFilename());
         metadata.setSize(request.getFile().getSize());
         metadata.setUploadTime(LocalDateTime.now());
-        metadata.setDescription(request.getDescription());
+        metadata.setDescription(request.getDescription() != null ? request.getDescription() : "");
 
+        logger.info("Metadata created: filename={}, size={}, description={}",
+                metadata.getFilename(), metadata.getSize(), metadata.getDescription());
 
+        // Set bidirectional relationship
         photo.setMetadata(metadata);
         metadata.setPhoto(photo);
 
+        // Save photo (cascade will save metadata)
+        logger.info("Saving photo to database...");
         Photo savedPhoto = photoRepository.save(photo);
+        logger.info("Photo saved with ID: {}", savedPhoto.getId());
 
+        if (savedPhoto.getMetadata() != null) {
+            logger.info("Metadata saved with ID: {}", savedPhoto.getMetadata().getId());
+        }
+
+        logger.info("=== PHOTO SERVICE: createPhoto END (SUCCESS) ===");
         return PhotoResponse.from(savedPhoto);
     }
 

@@ -4,6 +4,8 @@ import fcul.modc.requests.photos.CreatePhotoRequest;
 import fcul.modc.requests.photos.UpdatePhotoRequest;
 import fcul.modc.responses.photos.PhotoResponse;
 import fcul.modc.service.PhotoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,8 @@ import java.util.List;
 @RequestMapping("/photos")
 public class PhotoController {
 
+    private static final Logger logger = LoggerFactory.getLogger(PhotoController.class);
+
     private final PhotoService photoService;
 
     public PhotoController(PhotoService photoService) {
@@ -23,8 +27,31 @@ public class PhotoController {
 
     @PostMapping
     public ResponseEntity<PhotoResponse> createPhoto(@ModelAttribute CreatePhotoRequest request) throws IOException {
-        PhotoResponse photo = photoService.createPhoto(request);
-        return ResponseEntity.status(201).body(photo);
+        logger.info("=== CREATE PHOTO REQUEST RECEIVED ===");
+        logger.info("Request parameters:");
+        logger.info("  - albumId: {}", request.getAlbumId());
+        logger.info("  - ownerId: {}", request.getOwnerId());
+        logger.info("  - description: {}", request.getDescription());
+
+        if (request.getFile() != null) {
+            logger.info("  - file present: {}", request.getFile().getOriginalFilename());
+            logger.info("  - file size: {} bytes", request.getFile().getSize());
+            logger.info("  - file content type: {}", request.getFile().getContentType());
+        } else {
+            logger.error("  - file is NULL!");
+            throw new IllegalArgumentException("File is required");
+        }
+
+        try {
+            PhotoResponse photo = photoService.createPhoto(request);
+            logger.info("Photo created successfully with ID: {}", photo.getId());
+            logger.info("=== CREATE PHOTO REQUEST END (SUCCESS) ===");
+            return ResponseEntity.status(201).body(photo);
+        } catch (Exception e) {
+            logger.error("Error creating photo: ", e);
+            logger.error("=== CREATE PHOTO REQUEST END (ERROR) ===");
+            throw e;
+        }
     }
 
     @PutMapping("/{id}")

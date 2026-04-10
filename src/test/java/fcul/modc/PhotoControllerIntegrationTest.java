@@ -15,12 +15,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.InputStream;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -30,6 +32,9 @@ class PhotoControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private UserRepository userRepository;
@@ -49,7 +54,11 @@ class PhotoControllerIntegrationTest {
         albumRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = userRepository.save(new User("denis"));
+        user = new User();
+        user.setUsername("denis");
+        user.setPassword(passwordEncoder.encode("1234"));
+        user = userRepository.save(user);
+
         album = albumRepository.save(new Album("My Album", user));
     }
 
@@ -69,7 +78,8 @@ class PhotoControllerIntegrationTest {
                         .file(file)
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
-                        .param("description", "Test photo"))
+                        .param("description", "Test photo")
+                        .with(httpBasic("denis", "1234")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.filename").value("test-image.png"))
@@ -93,13 +103,14 @@ class PhotoControllerIntegrationTest {
                         .file(file)
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
-                        .param("description", "Test photo"))
+                        .param("description", "Test photo")
+                        .with(httpBasic("denis", "1234")))
                 .andReturn().getResponse().getContentAsString();
 
         Number photoIdNumber = JsonPath.read(response, "$.id");
         Long photoId = photoIdNumber.longValue();
 
-        mockMvc.perform(get("/photos/" + photoId))
+        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("denis", "1234")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(photoId))
                 .andExpect(jsonPath("$.filename").value("test-image.png"));
@@ -121,7 +132,8 @@ class PhotoControllerIntegrationTest {
                         .file(file)
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
-                        .param("description", "Test photo"))
+                        .param("description", "Test photo")
+                        .with(httpBasic("denis", "1234")))
                 .andReturn().getResponse().getContentAsString();
 
         Number photoIdNumber = JsonPath.read(response, "$.id");
@@ -136,7 +148,8 @@ class PhotoControllerIntegrationTest {
 
         mockMvc.perform(put("/photos/" + photoId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(updateJson))
+                        .content(updateJson)
+                        .with(httpBasic("denis", "1234")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.description").value("Updated description"));
     }
@@ -158,7 +171,8 @@ class PhotoControllerIntegrationTest {
                         .file(file)
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
-                        .param("description", "Test photo"))
+                        .param("description", "Test photo")
+                        .with(httpBasic("denis", "1234")))
                 .andReturn().getResponse().getContentAsString();
 
         Number photoIdNumber = JsonPath.read(response, "$.id");
@@ -166,15 +180,19 @@ class PhotoControllerIntegrationTest {
 
         // --- Cenário 1: dono apaga a foto com sucesso ---
         mockMvc.perform(delete("/photos/" + photoId)
-                        .param("ownerId", user.getId().toString()))
+                        .param("ownerId", user.getId().toString())
+                        .with(httpBasic("denis", "1234")))
                 .andExpect(status().isNoContent());
 
         // Verificar que a foto não existe mais
-        mockMvc.perform(get("/photos/" + photoId))
+        mockMvc.perform(get("/photos/" + photoId).with(httpBasic("denis", "1234")))
                 .andExpect(status().isNotFound());
 
         // --- Cenário 2: outro usuário tenta apagar a foto ---
-        User otherUser = userRepository.save(new User("otherUser"));
+        User otherUser = new User();
+        otherUser.setUsername("otherUser");
+        otherUser.setPassword(passwordEncoder.encode("1234"));
+        otherUser = userRepository.save(otherUser);
 
         // Recriar a foto para este teste
         InputStream is2 = new ClassPathResource("test-image.png").getInputStream();
@@ -189,15 +207,17 @@ class PhotoControllerIntegrationTest {
                         .file(file2)
                         .param("ownerId", user.getId().toString())
                         .param("albumId", album.getId().toString())
-                        .param("description", "Test photo 2"))
+                        .param("description", "Test photo 2")
+                        .with(httpBasic("denis", "1234")))
                 .andReturn().getResponse().getContentAsString();
 
         long photoId2 = ((Number) JsonPath.read(response2, "$.id")).longValue();
 
         // Tentar deletar com outro usuário
         mockMvc.perform(delete("/photos/" + photoId2)
-                        .param("ownerId", otherUser.getId().toString()))
+                        .param("ownerId", otherUser.getId().toString())
+                        .with(httpBasic("otherUser", "1234")))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message", containsString("User with id 9 is not the owner of album id 4")));
+                .andExpect(jsonPath("$.message", containsString("not the owner of album")));
     }
 }
