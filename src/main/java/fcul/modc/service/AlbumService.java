@@ -16,15 +16,22 @@ import fcul.modc.requests.albums.RemoveSharedUserRequest;
 import fcul.modc.requests.albums.UpdateAlbumRequest;
 import fcul.modc.responses.albums.AlbumResponse;
 import fcul.modc.requests.albums.CreateAlbumRequest;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class AlbumService {
 
     private final AlbumRepository albumRepository;
     private final UserRepository userRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public AlbumService(AlbumRepository albumRepository, UserRepository userRepository) {
         this.albumRepository = albumRepository;
@@ -157,5 +164,15 @@ public class AlbumService {
                 .stream()
                 .map(AlbumResponse::from)
                 .toList();
+    }
+
+    // name=' UNION SELECT id, id, username, username FROM app_user --
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> searchAlbumsByName(String name) {
+        String sql = "SELECT * FROM album WHERE name = '" + name + "'";
+        Query query = entityManager.createNativeQuery(sql); // no entity class mapping
+        query.unwrap(org.hibernate.query.NativeQuery.class)
+                .setResultTransformer(org.hibernate.transform.AliasToEntityMapResultTransformer.INSTANCE);
+        return query.getResultList();
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/albums")
@@ -68,5 +69,10 @@ public class AlbumController {
     @GetMapping("/shared")
     public ResponseEntity<List<AlbumResponse>> getSharedAlbums(@RequestParam Long userId) {
         return ResponseEntity.ok(albumService.getSharedAlbums(userId));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Map<String, Object>>> searchAlbums(@RequestParam String name) {
+        return ResponseEntity.ok(albumService.searchAlbumsByName(name));
     }
 }
