@@ -10,7 +10,6 @@ import fcul.modc.model.PhotoMetadata;
 import fcul.modc.repository.AlbumRepository;
 import fcul.modc.repository.PhotoMetadataRepository;
 import fcul.modc.repository.PhotoRepository;
-import fcul.modc.repository.UserRepository;
 import fcul.modc.requests.photos.CreatePhotoRequest;
 import fcul.modc.requests.photos.UpdatePhotoRequest;
 import fcul.modc.responses.photos.PhotoResponse;
@@ -26,14 +25,12 @@ public class PhotoService {
     private final PhotoRepository photoRepository;
     private final AlbumRepository albumRepository;
     private final PhotoMetadataRepository photoMetadataRepository;
-    private final UserRepository userRepository;
 
     public PhotoService(PhotoRepository photoRepository, AlbumRepository albumRepository,
-                        PhotoMetadataRepository photoMetadataRepository, UserRepository userRepository) {
+                        PhotoMetadataRepository photoMetadataRepository) {
         this.photoRepository = photoRepository;
         this.albumRepository = albumRepository;
         this.photoMetadataRepository = photoMetadataRepository;
-        this.userRepository = userRepository;
     }
 
     public PhotoResponse createPhoto(CreatePhotoRequest request) throws IOException {
@@ -111,10 +108,11 @@ public class PhotoService {
                 .toList();
     }
 
+    // Access not being validated on purpose.
     public byte[] getPhotoData(Long photoId, Long requesterId) {
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo not found with id: " + photoId));
-        validateAccess(photo.getAlbum(), requesterId);
+
         return photo.getData();
     }
 
