@@ -1,8 +1,11 @@
 package fcul.modc.exceptions;
 
+import fcul.modc.exceptions.album.AlbumAccessDeniedException;
 import fcul.modc.exceptions.album.AlbumAlreadyExistsException;
 import fcul.modc.exceptions.album.AlbumNotFoundException;
 import fcul.modc.exceptions.album.AlbumOwnerMismatchException;
+import fcul.modc.exceptions.album.AlbumUserAlreadySharedException;
+import fcul.modc.exceptions.album.AlbumUserNotSharedException;
 import fcul.modc.exceptions.photo.PhotoNotFoundException;
 import fcul.modc.exceptions.photo.PhotoOwnerMismatchException;
 import fcul.modc.exceptions.user.UserAlreadyExistsException;
@@ -44,6 +47,12 @@ public class GlobalExceptionHandler {
     }
 
     // ----------------- Album Exceptions -----------------
+    @ExceptionHandler(AlbumAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAlbumAccessDenied(AlbumAccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(ex.getMessage(), 403));
+    }
+
     @ExceptionHandler(AlbumNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleAlbumNotFound(AlbumNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -60,6 +69,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAlbumOwnerMismatch(AlbumOwnerMismatchException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(new ErrorResponse(ex.getMessage(), 403));
+    }
+
+    @ExceptionHandler(AlbumUserAlreadySharedException.class)
+    public ResponseEntity<ErrorResponse> handleAlbumUserAlreadyShared(AlbumUserAlreadySharedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage(), 409));
+    }
+
+    @ExceptionHandler(AlbumUserNotSharedException.class)
+    public ResponseEntity<ErrorResponse> handleAlbumUserNotShared(AlbumUserNotSharedException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(ex.getMessage(), 409));
     }
 
     // ----------------- Photo Exceptions -----------------

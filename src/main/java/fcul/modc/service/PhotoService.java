@@ -1,5 +1,6 @@
 package fcul.modc.service;
 
+import fcul.modc.exceptions.album.AlbumAccessDeniedException;
 import fcul.modc.exceptions.album.AlbumNotFoundException;
 import fcul.modc.exceptions.photo.PhotoNotFoundException;
 import fcul.modc.exceptions.photo.PhotoOwnerMismatchException;
@@ -93,25 +94,38 @@ public class PhotoService {
         photoRepository.delete(photo);
     }
 
-    public PhotoResponse getPhotoById(Long id) {
+    public PhotoResponse getPhotoById(Long id, Long requesterId) {
         Photo photo = photoRepository.findById(id)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo not found with id: " + id));
+        validateAccess(photo.getAlbum(), requesterId);
         return PhotoResponse.from(photo);
     }
 
-    public List<PhotoResponse> getPhotosByAlbum(Long albumId) {
+    public List<PhotoResponse> getPhotosByAlbum(Long albumId, Long requesterId) {
         Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + albumId));
-
+        validateAccess(album, requesterId);
         return photoRepository.findByAlbum(album)
                 .stream()
                 .map(PhotoResponse::from)
                 .toList();
     }
 
-    public byte[] getPhotoData(Long photoId) {
+    public byte[] getPhotoData(Long photoId, Long requesterId) {
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo not found with id: " + photoId));
+        validateAccess(photo.getAlbum(), requesterId);
         return photo.getData();
+    }
+
+    private void validateAccess(Album album, Long requesterId) {
+        boolean isOwner = album.getOwner().getId().equals(requesterId);
+        boolean isShared = album.getSharedUsers().stream()
+                .anyMatch(u -> u.getId().equals(requesterId));
+        if (!isOwner && !isShared) {
+            throw new AlbumAccessDeniedException(
+                    "User with id " + requesterId + " does not have access to album id " + album.getId()
+            );
+        }
     }
 }

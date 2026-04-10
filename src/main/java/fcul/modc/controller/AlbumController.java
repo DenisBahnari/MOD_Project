@@ -1,6 +1,8 @@
 package fcul.modc.controller;
 
 import fcul.modc.model.Album;
+import fcul.modc.requests.albums.AddSharedUserRequest;
+import fcul.modc.requests.albums.RemoveSharedUserRequest;
 import fcul.modc.requests.albums.UpdateAlbumRequest;
 import fcul.modc.responses.albums.AlbumResponse;
 import fcul.modc.requests.albums.CreateAlbumRequest;
@@ -22,8 +24,8 @@ public class AlbumController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<AlbumResponse> getAlbum(@PathVariable Long id) {
-        return ResponseEntity.ok(albumService.getAlbum(id));
+    public ResponseEntity<AlbumResponse> getAlbum(@PathVariable Long id, @RequestParam Long requesterId) {
+        return ResponseEntity.ok(albumService.getAlbum(id, requesterId));
     }
 
     @GetMapping
@@ -47,5 +49,24 @@ public class AlbumController {
     public ResponseEntity<Void> deleteAlbum(@PathVariable Long id) {
         albumService.deleteAlbum(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{albumId}/users")
+    public ResponseEntity<AlbumResponse> addSharedUser(
+            @PathVariable Long albumId,
+            @RequestBody AddSharedUserRequest request) {
+        return ResponseEntity.ok(albumService.addSharedUser(albumId, request));
+    }
+
+    @DeleteMapping("/{albumId}/users")
+    public ResponseEntity<AlbumResponse> removeSharedUser(
+            @PathVariable Long albumId,
+            @RequestBody RemoveSharedUserRequest request) {
+        return ResponseEntity.ok(albumService.removeSharedUser(albumId, request));
+    }
+
+    @GetMapping("/shared")
+    public ResponseEntity<List<AlbumResponse>> getSharedAlbums(@RequestParam Long userId) {
+        return ResponseEntity.ok(albumService.getSharedAlbums(userId));
     }
 }
