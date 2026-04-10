@@ -26,6 +26,15 @@ public class Album {
     @OneToMany(mappedBy = "album", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Photo> photos = new ArrayList<>();
 
+    // --- Shared users ---
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "album_shared_users",
+            joinColumns = @JoinColumn(name = "album_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<User> sharedUsers = new ArrayList<>();
+
     // --- Constructors ---
     protected Album() {}
 
@@ -43,6 +52,14 @@ public class Album {
     public void removePhoto(Photo photo) {
         photos.remove(photo);
         photo.setAlbum(null);
+    }
+
+    public void addSharedUser(User user) {
+        sharedUsers.add(user);
+    }
+
+    public void removeSharedUser(User user) {
+        sharedUsers.remove(user);
     }
 
     // --- Getters & Setters ---
@@ -74,5 +91,9 @@ public class Album {
 
     public List<Photo> getPhotos() {
         return photos;
+    }
+
+    public List<User> getSharedUsers() {
+        return sharedUsers;
     }
 }

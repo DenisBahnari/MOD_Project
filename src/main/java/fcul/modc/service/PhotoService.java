@@ -1,5 +1,6 @@
 package fcul.modc.service;
 
+import fcul.modc.exceptions.album.AlbumAccessDeniedException;
 import fcul.modc.exceptions.album.AlbumNotFoundException;
 import fcul.modc.exceptions.photo.PhotoNotFoundException;
 import fcul.modc.exceptions.photo.PhotoOwnerMismatchException;
@@ -9,7 +10,6 @@ import fcul.modc.model.PhotoMetadata;
 import fcul.modc.repository.AlbumRepository;
 import fcul.modc.repository.PhotoMetadataRepository;
 import fcul.modc.repository.PhotoRepository;
-import fcul.modc.repository.UserRepository;
 import fcul.modc.requests.photos.CreatePhotoRequest;
 import fcul.modc.requests.photos.UpdatePhotoRequest;
 import fcul.modc.responses.photos.PhotoResponse;
@@ -25,14 +25,12 @@ public class PhotoService {
     private final PhotoRepository photoRepository;
     private final AlbumRepository albumRepository;
     private final PhotoMetadataRepository photoMetadataRepository;
-    private final UserRepository userRepository;
 
     public PhotoService(PhotoRepository photoRepository, AlbumRepository albumRepository,
-                        PhotoMetadataRepository photoMetadataRepository, UserRepository userRepository) {
+                        PhotoMetadataRepository photoMetadataRepository) {
         this.photoRepository = photoRepository;
         this.albumRepository = albumRepository;
         this.photoMetadataRepository = photoMetadataRepository;
-        this.userRepository = userRepository;
     }
 
     public PhotoResponse createPhoto(CreatePhotoRequest request) throws IOException {
@@ -93,25 +91,39 @@ public class PhotoService {
         photoRepository.delete(photo);
     }
 
-    public PhotoResponse getPhotoById(Long id) {
+    public PhotoResponse getPhotoById(Long id, Long requesterId) {
         Photo photo = photoRepository.findById(id)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo not found with id: " + id));
+        validateAccess(photo.getAlbum(), requesterId);
         return PhotoResponse.from(photo);
     }
 
-    public List<PhotoResponse> getPhotosByAlbum(Long albumId) {
+    public List<PhotoResponse> getPhotosByAlbum(Long albumId, Long requesterId) {
         Album album = albumRepository.findById(albumId)
                 .orElseThrow(() -> new AlbumNotFoundException("Album not found with id: " + albumId));
-
+        validateAccess(album, requesterId);
         return photoRepository.findByAlbum(album)
                 .stream()
                 .map(PhotoResponse::from)
                 .toList();
     }
 
-    public byte[] getPhotoData(Long photoId) {
+    // Access not being validated on purpose.
+    public byte[] getPhotoData(Long photoId, Long requesterId) {
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new PhotoNotFoundException("Photo not found with id: " + photoId));
+
         return photo.getData();
+    }
+
+    private void validateAccess(Album album, Long requesterId) {
+        boolean isOwner = album.getOwner().getId().equals(requesterId);
+        boolean isShared = album.getSharedUsers().stream()
+                .anyMatch(u -> u.getId().equals(requesterId));
+        if (!isOwner && !isShared) {
+            throw new AlbumAccessDeniedException(
+                    "User with id " + requesterId + " does not have access to album id " + album.getId()
+            );
+        }
     }
 }

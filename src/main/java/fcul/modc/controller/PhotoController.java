@@ -40,18 +40,18 @@ public class PhotoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PhotoResponse> getPhoto(@PathVariable Long id) {
-        return ResponseEntity.ok(photoService.getPhotoById(id));
+    public ResponseEntity<PhotoResponse> getPhoto(@PathVariable Long id, @RequestParam Long requesterId) {
+        return ResponseEntity.ok(photoService.getPhotoById(id, requesterId));
     }
 
     @GetMapping("/{id}/data")
-    public ResponseEntity<byte[]> getPhotoData(@PathVariable Long id) {
-        byte[] data = photoService.getPhotoData(id);
+    public ResponseEntity<byte[]> getPhotoData(@PathVariable Long id, @RequestParam Long requesterId) {
+        byte[] data = photoService.getPhotoData(id, requesterId);
         return ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(data);
     }
 
     @GetMapping("/album/{albumId}")
-    public ResponseEntity<List<PhotoResponse>> getPhotosByAlbum(@PathVariable Long albumId) {
-        return ResponseEntity.ok(photoService.getPhotosByAlbum(albumId));
+    public ResponseEntity<List<PhotoResponse>> getPhotosByAlbum(@PathVariable Long albumId, @RequestParam Long requesterId) {
+        return ResponseEntity.ok(photoService.getPhotosByAlbum(albumId, requesterId));
     }
 }
